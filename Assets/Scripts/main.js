@@ -11,6 +11,9 @@ var blueFlag;
 var gravity = 1;
 var running = false;
 
+//tiles
+var tileSize = 64;
+
 //Animations
 var playerRunningRight;
 var playerRunningLeft;
@@ -21,27 +24,27 @@ var playerJumpingLeft;
 
 //Map
 var tileMap1 = [
-  ['a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a',],
-  ['a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a',],
-  ['a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a',],
-  ['a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a',],
-  ['a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a',],
-  ['a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a',],
-  ['a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a',],
-  ['a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a',],
-  ['a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a',],
-  ['a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a',],
-  ['g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g',],
-  ['g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g',],
-  ['g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g',],
-  ['g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g',],
-  ['g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g',],
-  ['g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g',],
-  ['g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g',],
-  ['g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g',],
-  ['g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g',],
-  ['g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g',],
-  ['g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g',],
+  ['a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a'],
+  ['a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a'],
+  ['a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a'],
+  ['a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a'],
+  ['a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a'],
+  ['a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a'],
+  ['a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a'],
+  ['a','a','a','a','a','a','g','g','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','g','g','a','a','a','a','a','a','a','a','a','a','a','a'],
+  ['a','a','g','g','a','a','g','g','a','g','a','a','a','a','a','g','a','a','a','a','a','a','g','g','a','a','g','g','a','g','a','a','a','a','a','g','a','a','a','a'],
+  ['a','g','g','g','a','g','g','g','g','g','g','g','a','a','g','g','g','a','a','a','a','g','g','g','a','g','g','g','g','g','g','g','a','a','g','g','g','a','a','a'],
+  ['g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g'],
+  ['g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g'],
+  ['g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g'],
+  ['g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g'],
+  ['g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g'],
+  ['g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g'],
+  ['g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g'],
+  ['g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g'],
+  ['g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g'],
+  ['g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g'],
+  ['g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g','g']
 ]
 
 //game
@@ -71,8 +74,8 @@ var Canvas = {
 //Clases
 function TileSheet(onLoad) {
   this.sheet = new Image();
-  this.tileWidth = 64;
-  this.tileHeight = 64;
+  this.tileWidth = tileSize;
+  this.tileHeight = tileSize;
   var tileSheet = this;
   this.sheet.onload = function ()
   {
@@ -83,8 +86,8 @@ function TileSheet(onLoad) {
 
 function PlayerSheet(onLoad) {
   this.sheet = new Image();
-  this.playerWidth = 64;
-  this.playerHeight = 64;
+  this.playerWidth = tileSize;
+  this.playerHeight = tileSize;
   var playerSheet = this;
   this.sheet.onload = function ()
   {
@@ -191,36 +194,20 @@ function Tile() {
   }
 }
 
-function Scene(name,desc,width,height,mapId,tileSheet) {
-  this.sceneName = name;
-  this.sceneDesc = desc;
-  this.width = width;
-  this.height = height;
-  this.charMap;
-  this.render = function () {
-    this.charMap = getMap(mapId);
-    for (var y = 0; y < this.height; y++) {
-      for (var x = 0; x < this.width; x++) {
-        frame = 1;
-        if (y >= 7) {
-          frame = 0;
-        }
-        ctx.drawImage(
-          tileSheet.sheet,
-          frame * tileSheet.tileWidth,
-          0,
-          tileSheet.tileWidth,
-          tileSheet.tileHeight,
-          x * tileSheet.tileWidth,
-          y * tileSheet.tileHeight,
-          tileSheet.tileWidth,
-          tileSheet.tileHeight);
-      }
-    }
+function Camera(focus,width,height) {
+  this.focus = focus;
+  this.xOffset = 0;
+  this.yOffset = 5;
+  this.xPos = focus.xPos;
+  this.yPos = focus.yPos;
+  this.viewportWidth = width;
+  this.viewportHeight = height;
+  this.update = function () {
+    // if ()
   }
 }
 
-function Player(playerSheet) {
+ function Player(playerSheet) {
   this.playerState = {
     IDLE: 0,
     RUNNING: 1,
@@ -228,8 +215,8 @@ function Player(playerSheet) {
   }
   this.state = this.playerState.IDLE;
 
-  this.xPos = 4*64;
-  this.yPos = 6*64;
+  this.xPos = 4*tileSize;
+  this.yPos = 3*tileSize;
 
   this.isFacingRight = true;
 
@@ -247,7 +234,7 @@ function Player(playerSheet) {
 
   this.currentAnimationController = this.idleRight;
 
-  this.jumpHeight = 12;
+  this.jumpHeight = 15;
   this.jumpY = 0;
   this.t = 0;
 
@@ -280,9 +267,10 @@ function Player(playerSheet) {
     else if (this.acceleration != 0)
     {
       oldSpeed = this.speed
-      if (this.speed < 0)
+      if (this.speed < 0) {
         this.speed += Math.abs(this.acceleration) + this.friction;
-      else {
+
+      } else {
         this.speed -= Math.abs(this.acceleration) + this.friction;
       }
       if (Math.sign(oldSpeed) != Math.sign(this.speed))
@@ -329,12 +317,14 @@ function Player(playerSheet) {
       this.currentAnimationController = this.setAnimation(this.runningLeft);
       this.acceleration = -0.15;
       this.state |= this.playerState.RUNNING;
+      scene.camera.xOffset--;
     }
     else if (Key.isDown(Key.RIGHT)) {
       this.isFacingRight = true;
       this.currentAnimationController = this.setAnimation(this.runningRight);
       this.acceleration = 0.15;
       this.state |= this.playerState.RUNNING;
+      scene.camera.xOffset++;
     }
     else if ((this.state & this.playerState.JUMPING) != this.playerState.JUMPING) {
       this.state &= ~this.playerState.RUNNING;
@@ -344,13 +334,48 @@ function Player(playerSheet) {
         this.currentAnimationController = this.idleLeft;
       }
     }
-    this.move();
+    // this.move();
     this.currentAnimationController.tick();
     this.currentAnimationController.updateFrames();
 
     if ((this.state & this.playerState.JUMPING) == this.playerState.JUMPING)
     {
       this.jump();
+    }
+  }
+}
+
+function Scene(name,desc,width,height,mapId,tileSheet) {
+  this.sceneName = name;
+  this.sceneDesc = desc;
+  this.width = width;
+  this.height = height;
+  this.camera;
+  this.charMap;
+  this.render = function () {
+    this.charMap = getMap(mapId);
+    var dy = 0;
+    for (var y = this.camera.yOffset; y < this.camera.viewportHeight + this.camera.yOffset; y++) {
+      dy++;
+      var dx = 0;
+      for (var x = this.camera.xOffset; x < this.camera.viewportWidth + this.camera.xOffset; x++) {
+        dx++;
+        if (this.charMap[y][x] == 'a') {
+          frame = 1;
+        } else if (this.charMap[y][x] == 'g') {
+          frame = 0;
+        }
+        ctx.drawImage(
+          tileSheet.sheet,
+          frame * tileSheet.tileWidth,
+          0,
+          tileSheet.tileWidth,
+          tileSheet.tileHeight,
+          dx * tileSheet.tileWidth,
+          dy * tileSheet.tileHeight,
+          tileSheet.tileWidth,
+          tileSheet.tileHeight);
+      }
     }
   }
 }
@@ -370,14 +395,15 @@ function loadContent() {
   new TileSheet(
     function(tileSheet)
     {
-      scene = new Scene("Map1","Basic Map",20,20,1,tileSheet);
-      scene.render();
+      scene = new Scene("Map1","Basic Map",40,20,1,tileSheet);
     })
 
   new PlayerSheet(
     function(playerSheet)
     {
       player = new Player(playerSheet);
+      scene.camera = new Camera(player,15,7);
+      scene.render();
       player.render();
     })
 
@@ -393,11 +419,11 @@ function loadContent() {
 function render() {
   scene.render();
   player.render();
+
 }
 
 function update() {
   player.update();
-  console.log(player.currentAnimationController);
 }
 
 function getMap(id) {
