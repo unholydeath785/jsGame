@@ -198,12 +198,18 @@ function Camera(focus,width,height) {
   this.focus = focus;
   this.xOffset = 0;
   this.yOffset = 5;
-  this.xPos = focus.xPos;
-  this.yPos = focus.yPos;
   this.viewportWidth = width;
   this.viewportHeight = height;
+  this.xPos = this.xOffset * tileSize;
+  this.xPos2 = this.xOffset * tileSize + this.viewportWidth * tileSize;
   this.update = function () {
-    // if ()
+    this.xPos = this.xOffset * tileSize;
+    this.xPos2 = this.xOffset * tileSize + this.viewportWidth * tileSize;
+    if (focus.xPos > this.xPos2 - this.viewportWidth - 7 * tileSize) {
+      this.xOffset += 1;
+    } else if (focus.xPos < this.xPos + this.viewportWidth - 7 * tileSize){
+      this.xOffset -= 1;
+    }
   }
 }
 
@@ -298,7 +304,7 @@ function Camera(focus,width,height) {
       frameY * playerSheet.playerHeight,
       playerSheet.playerWidth,
       playerSheet.playerHeight,
-      this.xPos,
+      this.xPos - scene.camera.xPos,
       this.yPos + this.jumpY,
       playerSheet.playerWidth,
       playerSheet.playerHeight
@@ -317,14 +323,14 @@ function Camera(focus,width,height) {
       this.currentAnimationController = this.setAnimation(this.runningLeft);
       this.acceleration = -0.15;
       this.state |= this.playerState.RUNNING;
-      scene.camera.xOffset--;
+      // scene.camera.xOffset--;
     }
     else if (Key.isDown(Key.RIGHT)) {
       this.isFacingRight = true;
       this.currentAnimationController = this.setAnimation(this.runningRight);
       this.acceleration = 0.15;
       this.state |= this.playerState.RUNNING;
-      scene.camera.xOffset++;
+      // scene.camera.xOffset++;
     }
     else if ((this.state & this.playerState.JUMPING) != this.playerState.JUMPING) {
       this.state &= ~this.playerState.RUNNING;
@@ -334,7 +340,7 @@ function Camera(focus,width,height) {
         this.currentAnimationController = this.idleLeft;
       }
     }
-    // this.move();
+    this.move();
     this.currentAnimationController.tick();
     this.currentAnimationController.updateFrames();
 
@@ -424,6 +430,7 @@ function render() {
 
 function update() {
   player.update();
+  scene.camera.update();
 }
 
 function getMap(id) {
