@@ -23,7 +23,7 @@ var playerJumpingRight;
 var playerJumpingLeft;
 
 //Map
-var tileMap1 = [
+var charMap1 = [
   ['a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a'],
   ['a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a'],
   ['a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a'],
@@ -65,6 +65,23 @@ var Canvas = {
   },
   clear: function() {
     this.ctx.clearRect(0,0, this.canvas.width, this.canvas.height);
+  },
+  setClipArea: function functionName(camera) {
+    ctx.rect(
+      0,
+      0,
+      camera.viewportWidth,
+      camera.viewportHeight
+    )
+    ctx.clip();
+  },
+  setCtxScale: function (camera) {
+    this.width = this.canvas.width;
+    this.height = this.canvas.height;
+    this.viewportWidth = camera.viewportWidth;
+    this.viewportHeight = camera.viewportHeight;
+    this.ratioW = this.width/this.viewportWidth;
+    this.ratioH = this.height/this.viewportHeight;
   },
   getCanvasContext: function () {
     return this.ctx;
@@ -169,17 +186,20 @@ function AnimationController(animation) {
   }
 }
 
-function Tile() {
-  this.xPos;
-  this.yPos;
+function Tile(tileSheet,isSolid,isMobile,isTrigger,blastResistance,x,y) {
+  this.xPos = x;
+  this.yPos = y;
   this.width = tileSheet.tileWidth;
   this.height = tileSheet.tileHeight;
   this.image = {
     frameX: 0,
     frameY: 0
   }
-  this.collidable;
-  this.interactable;
+  this.collider;
+  this.solid = isSolid;
+  this.mobile = isMobile;
+  this.trigger = isTrigger;
+  this.blastResistance = blastResistance;
   this.render = function (width,height) {
     ctx.drawImage(
       tileSheet.sheet,
@@ -196,20 +216,96 @@ function Tile() {
 
 function Camera(focus,width,height) {
   this.focus = focus;
-  this.xOffset = 0;
-  this.yOffset = 5;
-  this.viewportWidth = width;
-  this.viewportHeight = height;
-  this.xPos = this.xOffset * tileSize;
-  this.xPos2 = this.xOffset * tileSize + this.viewportWidth * tileSize;
+  this.viewportWidth = width * tileSize;
+  this.viewportHeight = height * tileSize;
+  this.xPos = 0;
+  this.yPos = 5 * tileSize;
   this.update = function () {
-    this.xPos = this.xOffset * tileSize;
-    this.xPos2 = this.xOffset * tileSize + this.viewportWidth * tileSize;
-    if (focus.xPos > this.xPos2 - this.viewportWidth - 7 * tileSize) {
-      this.xOffset += 1;
-    } else if (focus.xPos < this.xPos + this.viewportWidth - 7 * tileSize){
-      this.xOffset -= 1;
+    if (focus.xPos > this.xPos + this.viewportWidth * (3/4)) {
+      this.xPos = focus.xPos - this.viewportWidth * (3/4);
+    } else if (focus.xPos < this.xPos + this.viewportWidth * (1/4)) {
+      this.xPos = focus.xPos - this.viewportWidth * (1/4);
     }
+  }
+}
+
+function BoxCollider(width,height,x,y) {
+  this.type = "rect"
+  this.width = width;
+  this.height = height;
+  this.x = x;
+  this.y = y;
+  scene.colliders.push(this);
+  this.checkCollision = function () {
+    for (var e = 0; e < scene.colliders.length; e++) {
+      c = scene.colliders[e];
+      if (c.type == "circle" && c != this) {
+        return circleRectCollision(c.x,c.y,c.radius,this.x,this.y,this.width,this.height);
+      } else if (c.type == "rect" && c != this) {
+        return rectRectCollision();
+      } else if (c.type == "point" && c != this) {
+        return rectPointCollision(this.x,this.y,this.width,this.height,c.x,c.y);
+      }
+    }
+  }
+  this.render = function () {
+    ctx.beginPath();
+    ctx.rect(this.x,this.y,width,height);
+    ctx.strokeStyle = 'red';
+    ctx.stroke();
+  }
+}
+
+function PointCollider(x,y) {
+  this.type = "point";
+  this.x = x;
+  this.y = y;
+  this.checkCollision = function () {
+    for (var e = 0; e < scene.colliders.length; e++) {
+      c = scene.colliders[e];
+      if (c.type == "point") {
+        return pointPointCollision(this.x,this.y,c.x,c.y)
+      }
+      if (c.type == "rect") {
+        return rectPointCollision(c.x,c.y,c.width,c.height,this.x,this.y)
+      }
+      if (c.type == "circle") {
+        return circlePointCollision(this.x,this.y,c.x,c.y,c.radius)
+      }
+    }
+  }
+}
+
+function CircleCollider(x,y,radius) {
+  this.type = "circle";
+  this.x = x;
+  this.y = y;
+  this.radius = radius;
+  scene.colliders.push(this);
+  this.checkCollision = function () {
+    for (var e = 0; e < scene.colliders.length; e++) {
+      c = scene.colliders[e];
+      if (c.type == "circle" && c != this) {
+        return circleCircleCollision(this.x,this.y,this.radius,c.x,c.y,c.radius);
+      } else if (c.type == "rect" && c != this) {
+        return circleRectCollision(this.x,this.y,this.radius,c.x,c.y,c.width,c.height)
+      } else if (c.type == "point" && c != this) {
+        return circlePointCollision(c.x,c.y,this.x,this.y,this.radius);
+      }
+    }
+  }
+  this.render = function () {
+    ctx.beginPath();
+    ctx.arc(
+      this.x,
+      this.y,
+      this.radius,
+      0,
+      2 * Math.PI,
+      false
+    )
+    ctx.strokeStyle = 'red';
+    ctx.stroke();
   }
 }
 
@@ -221,8 +317,8 @@ function Camera(focus,width,height) {
   }
   this.state = this.playerState.IDLE;
 
-  this.xPos = 4*tileSize;
-  this.yPos = 3*tileSize;
+  this.xPos = 1*tileSize;
+  this.yPos = 8*tileSize;
 
   this.isFacingRight = true;
 
@@ -240,6 +336,8 @@ function Camera(focus,width,height) {
 
   this.currentAnimationController = this.idleRight;
 
+  this.collider = new BoxCollider(24,64,this.xPos, this.yPos);
+
   this.jumpHeight = 15;
   this.jumpY = 0;
   this.t = 0;
@@ -253,7 +351,8 @@ function Camera(focus,width,height) {
     }
 
     this.jumpY = ((this.t-this.jumpHeight)*(this.t+this.jumpHeight));
-    this.t = this.t + 0.75
+
+    this.t = this.t + 0.75;
     if (this.t > this.jumpHeight)
     {
       this.state = (this.state & ~this.playerState.JUMPING);
@@ -292,7 +391,10 @@ function Camera(focus,width,height) {
       this.speed = -(this.maxSpeed);
     }
 
-    this.xPos += this.speed;
+    var xNew = Math.floor(this.xPos + this.speed);
+    if (canMove(xNew + tileSize / 2,this.yPos + this.jumpY)) {
+      this.xPos = xNew;
+    }
   }
 
   this.render = function () {
@@ -305,7 +407,7 @@ function Camera(focus,width,height) {
       playerSheet.playerWidth,
       playerSheet.playerHeight,
       this.xPos - scene.camera.xPos,
-      this.yPos + this.jumpY,
+      this.yPos + this.jumpY - scene.camera.yPos,
       playerSheet.playerWidth,
       playerSheet.playerHeight
     );
@@ -323,14 +425,12 @@ function Camera(focus,width,height) {
       this.currentAnimationController = this.setAnimation(this.runningLeft);
       this.acceleration = -0.15;
       this.state |= this.playerState.RUNNING;
-      // scene.camera.xOffset--;
     }
     else if (Key.isDown(Key.RIGHT)) {
       this.isFacingRight = true;
       this.currentAnimationController = this.setAnimation(this.runningRight);
       this.acceleration = 0.15;
       this.state |= this.playerState.RUNNING;
-      // scene.camera.xOffset++;
     }
     else if ((this.state & this.playerState.JUMPING) != this.playerState.JUMPING) {
       this.state &= ~this.playerState.RUNNING;
@@ -341,6 +441,9 @@ function Camera(focus,width,height) {
       }
     }
     this.move();
+    this.collider.x = this.xPos - scene.camera.xPos + tileSize/2 - this.collider.width/2;
+    this.collider.y = this.yPos + this.jumpY;
+    var colliding = this.collider.checkCollision();
     this.currentAnimationController.tick();
     this.currentAnimationController.updateFrames();
 
@@ -357,15 +460,13 @@ function Scene(name,desc,width,height,mapId,tileSheet) {
   this.width = width;
   this.height = height;
   this.camera;
-  this.charMap;
+  this.colliders = [];
+  this.tileMap = [];
+  this.charMap = getMap(mapId);
   this.render = function () {
-    this.charMap = getMap(mapId);
-    var dy = 0;
-    for (var y = this.camera.yOffset; y < this.camera.viewportHeight + this.camera.yOffset; y++) {
-      dy++;
-      var dx = 0;
-      for (var x = this.camera.xOffset; x < this.camera.viewportWidth + this.camera.xOffset; x++) {
-        dx++;
+    for (var y = Math.floor(this.camera.yPos / tileSize); y < (this.camera.viewportHeight + this.camera.yPos) / tileSize; y++) {
+      for (var x = Math.floor(this.camera.xPos / tileSize); x < (this.camera.viewportWidth + this.camera.xPos) / tileSize; x++) {
+        var frame = 1;
         if (this.charMap[y][x] == 'a') {
           frame = 1;
         } else if (this.charMap[y][x] == 'g') {
@@ -377,8 +478,8 @@ function Scene(name,desc,width,height,mapId,tileSheet) {
           0,
           tileSheet.tileWidth,
           tileSheet.tileHeight,
-          dx * tileSheet.tileWidth,
-          dy * tileSheet.tileHeight,
+          (x * tileSheet.tileWidth) - this.camera.xPos,
+          (y * tileSheet.tileHeight) - this.camera.yPos,
           tileSheet.tileWidth,
           tileSheet.tileHeight);
       }
@@ -402,6 +503,19 @@ function loadContent() {
     function(tileSheet)
     {
       scene = new Scene("Map1","Basic Map",40,20,1,tileSheet);
+      for (var y = 0; y < scene.charMap.length; y++) {
+        scene.tileMap.push([]);
+        for (var x = 0; x < scene.charMap[y].length; x++) {
+          if (scene.charMap[y][x] == 'a') {
+            scene.tileMap[y][x] = new Tile(tileSheet,false,false,false,null,x * tileSize, y * tileSize);
+            scene.tileMap[y][x].image.frameX = 0;
+          }
+          if (scene.charMap[y][x] == 'g') {
+            scene.tileMap[y][x] = new Tile(tileSheet,true,false,false,null,x * tileSize, y * tileSize);
+            scene.tileMap[y][x].image.frameX = 1;
+          }
+        }
+      }
     })
 
   new PlayerSheet(
@@ -411,6 +525,8 @@ function loadContent() {
       scene.camera = new Camera(player,15,7);
       scene.render();
       player.render();
+      Canvas.setClipArea(scene.camera);
+      Canvas.setCtxScale(scene.camera);
     })
 
   //createAnimation
@@ -425,7 +541,6 @@ function loadContent() {
 function render() {
   scene.render();
   player.render();
-
 }
 
 function update() {
@@ -436,9 +551,100 @@ function update() {
 function getMap(id) {
   switch (id) {
     case 1:
-      return tileMap1;
+      return charMap1;
       break;
     default:
 
+  }
+}
+
+function distanceXY(x0,y0,x1,y1) {
+  var dx = x1 - x0;
+  var dy = y1 - y0;
+  return Math.sqrt(dx * dx + dy * dy);
+}
+
+function testIntersection(x,y,radius,tx,ty) {
+  var distance = distanceXY(x,y,tx,ty);
+  if (distance <= radius) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+function circleRectCollision(cX,cY,radius,rX,rY,width,height) {
+  var colliding = false
+  var x1 = rX - radius;
+  var x2 = rX;
+  var x3 = rX + width;
+  var x4 = rX + width + radius;
+  var y1 = rY - radius;
+  var y2 = rY;
+  var y3 = rY + height;
+  var y4 = rY + height + radius;
+  if (cX >= x1 && cY >= y1 && cX <= x4 && cY <= y4) {
+    if (cX >= x1 && cY >= y1 && cX <= x2 && cY <= y2) {
+      //Upper Left
+      colliding = testIntersection(x2,y2,radius,cX,cY);
+    } else if (cX >= x3 && cY >= y1 && cX <= x4 && cY <= y2) {
+      //Upper Right
+      colliding = testIntersection(x3,y2,radius,cX,cY);
+    } else if (cX >= x1 && cY >= y3 && cX <= x2 && cY <= y4) {
+      //Lower Left
+      colliding = testIntersection(x2,y3,radius,cX,cY);
+    } else if (cX >= x3 && cY >= y3 && cX <= x4 && cY <= y4) {
+      //Lower Right
+      colliding = testIntersection(x3,y3,radius,cX,cY);
+    } else {
+      //100% Certified Angus Beef (U Wot M8)
+      colliding = true;
+    }
+  }
+  console.log(colliding);
+  return colliding;
+}
+
+function circleCircleCollision(x1,y1,x2,y2,r1,r2) {
+  var distance = distanceXY(x1,y1,x2,y2);
+  var radiusDistance = r1 + r2;
+  var colliding = radiusDistance >= distance;
+  return colliding;
+}
+
+function circlePointCollision(x1,y1,x2,y2,r) {
+  var distance = distanceXY(x1,y1,x2,y2);
+  var colliding = r >= distance;
+  return colliding;
+}
+
+function rectRectCollision() {
+
+}
+
+function rectPointCollision(rx,ry,width,height,x,y) {
+  if (x >= rx && y >= ry && x <= rx + width && y <= ry + height) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+function pointPointCollision(x1,y1,x2,y2) {
+  if (x1 == x2 && y1 == y2) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+function canMove(x,y) {
+  var tileX = Math.floor(x / tileSize);
+  var tileY = Math.floor(y / tileSize);
+  console.log(scene.tileMap[tileY][tileX].solid);
+  if (scene.tileMap[tileY][tileX].solid) {
+    return false;
+  } else {
+    return true;
   }
 }
